@@ -1,0 +1,29 @@
+{
+  "name": "wicker",
+  "version": "1.0.0",
+  "dependencies": {
+    "websocket": "^1.0.24"
+  },
+  "description": "A WebSocket server module",
+  "main": "server.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node server.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ianfoose/wicker.git"
+  },
+  "keywords": [
+    "nodejs",
+    "websockets",
+    "server",
+    "sockets"
+  ],
+  "author": "Ian Foose",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ianfoose/wicker/issues"
+  },
+  "homepage": "https://github.com/ianfoose/wicker#readme"
+}
