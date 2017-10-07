@@ -1,6 +1,5 @@
 // modules
 var WebSocketServer = require('websocket').server;
-var http = require('http');
 
 // server object
 var serverObj = {};
@@ -8,6 +7,21 @@ var serverObj = {};
 //connections array
 var connections = [];
 var validTopics = []; // optional
+var routes = [];
+
+module.exports.route = function(name, func) {
+	if(!func) {
+    	throw new Error('empty route function');
+    } else {
+    	if(!name) {
+        	throw new Error('empty route name');
+        } else {
+        	if(routes.findIndex(x => x.name === name) < 0) {
+        		routes.push({route: name, func: func});
+        	}
+        }
+    }
+};
 
 module.exports.createSocketServer = function(options) {
     var port = 80;
@@ -28,39 +42,25 @@ module.exports.createSocketServer = function(options) {
         }
 
         if(options.ssl) { // https
-            var ssl = options.ssl;
-
-            var sslOptions = {};
-
-            if(ssl.ca) { sslOptions.ca = ssl.ca; }
-
-            if(ssl.cert) { sslOptions.cert = ssl.cert; }
-
-            if(ssl.key) { sslOptions.key = ssl.key; }
-            // check for cert/key
+            var sslOptions = options.ssl;
 
             if(sslOptions.key && sslOptions.cert) {
-                var express = require('express');
-                var app = express();
+                var https = require('https');
+                serverObj.server = https.createServer(sslOptions, function(request, response) {
 
-                serverObj.server = https.createServer(options, app, function(request, response) {
-                    showStartMessage(request, response);
+                   showStartMessage(request, response);
                 });
             } else {
                 throw new Error('No SSL Credentials Provided');
             }
         } else { // http
+            var http = require('http');
             serverObj.server = http.createServer(function(request, response) {
                 showStartMessage(request, response);
             });
         }
-    } 
+    }
 
-    serverObj.server = http.createServer(function(request, response) {
-        console.log((new Date()) + ' Received request for ' + request.url);
-        response.writeHead(404);
-        response.end();
-    });
     serverObj.server.listen(port, function() {
         console.log((new Date()) + ' Server is listening on port '+port);
     });
@@ -75,6 +75,7 @@ module.exports.createSocketServer = function(options) {
     serverObj.wsServer.on('request', function(request) {
         if (!originIsAllowed(request.origin)) {
           // Make sure we only accept requests from an allowed origin 
+          
           request.reject();
           console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
           return;
@@ -86,7 +87,7 @@ module.exports.createSocketServer = function(options) {
         connections.push(connection);
 
         console.log((new Date()) + ' Connection accepted.');
-        
+
         connection.on('message', function(message) {
             if (message.type === 'utf8') {
                 parseBody(message.utf8Data, connections[connections.findIndex(x => x.remoteAddress === connection.remoteAddress)],'utf8');
@@ -105,28 +106,15 @@ module.exports.createSocketServer = function(options) {
     return serverObj;
 };
 
-// ====== helper functions ======
-
-function showStartMessage(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
-    response.writeHead(404);
-    response.end();
-}
-
-function originIsAllowed(origin) {
-  // put logic here to detect whether the specified origin is allowed. 
-  return true;
-}
-
 // sends to all connected sockets
-function sendToAll(message, type) {
+module.exports.sendToAll = function(message, type) {
     for(var i=0;i<connections.length;i++) {
         sendData(message, type, connections[i]);
     }
-}
+};
 
 // sends data to all topics and subscribing ids
-function sendToTopic(topic,ids,message,type) {
+module.exports.sendToTopic = function(topic,ids,message,type) {
     for(var i=0;i<connections.length;i++) {
         if(connections[i].subscriptions.findIndex(x => x.topic === topic) >= 0) {
             var con = connections[i].subscriptions[connections[i].subscriptions.findIndex(x => x.topic === topic)];
@@ -148,6 +136,19 @@ function sendToTopic(topic,ids,message,type) {
             }
         }
     } 
+};
+
+// ====== helper functions ======
+
+function showStartMessage(request, response) {
+    console.log((new Date()) + ' Received request for ' + request.url);
+    response.writeHead(404);
+    response.end();
+}
+
+function originIsAllowed(origin) {
+  // put logic here to detect whether the specified origin is allowed. 
+  return true;
 }
 
 // sends data to connection as binary or utf8
@@ -179,20 +180,18 @@ function getIDArray(data) {
 }
 
 // manages custom commands 'routes'
-function routes(message, connection, type) {
+function router(message, connection, type) {
     var command = message.command;
 
-    if(command == "send") {
-        if(message.data) {
-            var data = message.data;
-
-            if(data.msg && data.topic) {
-                sendToTopic(data.topic,data.id,JSON.stringify({msg: data.msg}),type);
-            }
-        } else {
-            console.log('Received NO Data: ' + message);  
-        }
-    } 
+	if(command) {
+        var i = routes.findIndex(x => x.route === command);
+      
+		if(i >= 0) {
+			routes[i].func(message, type, connection);
+		}
+	} else { // no command
+        sendData('No Command',type,connection);
+	}
 }
 
 // parses message body
@@ -207,11 +206,9 @@ function parseBody(message, connection, type) {
                 if(command == 'subscribe' || command == 'unsubscribe') {
                     if(message.data) {
                         var data = message.data;
-
                         var idIndex = connection.subscriptions.findIndex(x => x.topic === data.topic);
 
                         if(data.topic) {
-                            console.log('data.topic');
                             if(command == "subscribe") {
                                 if(validTopics.length > 0) {
                                     for(var i=0;i<validTopics.length;i++) {
@@ -234,7 +231,7 @@ function parseBody(message, connection, type) {
                                     }
                                 } else {
                                     if(idIndex < 0) {
-                                       var t = {topic:data.topic,ids:[]};
+                                        var t = {topic:data.topic,ids:[]};
                                         connection.subscriptions.push(t);
                                     }
                                 }
@@ -269,7 +266,7 @@ function parseBody(message, connection, type) {
                         console.log('Received NO Data: ' + message);  
                     }
                 } else {
-                    routes(message, connection, type);
+                    router(message, connection, type);
                 } 
             } else { // abort
                 sendData("NO Command Recieved",type, connection);
