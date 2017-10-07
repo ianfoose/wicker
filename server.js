@@ -213,9 +213,7 @@ function parseBody(message, connection, type) {
                                 if(validTopics.length > 0) {
                                     for(var i=0;i<validTopics.length;i++) {
                                         if(data.topic == validTopics[i]) {
-                                            console.log('ii');
                                             if(idIndex < 0) {
-                                                console.log('uu');
                                                 var t = {topic:data.topic,ids:[]};
                                                 connection.subscriptions.push(t);
                                                 break;
