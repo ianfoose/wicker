@@ -43,7 +43,7 @@ var server = wicker.createServer({ port: 80, validTopics: topics });
 
 Use custom commands to perform actions.
 
-Commands are executing similarly to express routing  
+Commands are executed similarly to express routing  
 
 Arguments passed to the route callback are ```message```, ```type``` and ```connection```
 
