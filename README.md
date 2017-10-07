@@ -70,6 +70,10 @@ wicker.sendToAll('hello',type);
 
 ### Sending To a Specfic Topic
 
+Topic is the topic name  
+
+ids is the topic ids that will be recieving the data
+
 ```js
 var ids = message.data.id;
 var topic = message.data.topic;
