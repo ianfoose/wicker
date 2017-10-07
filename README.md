@@ -38,3 +38,44 @@ var topics = ['posts','comments'];
 
 var server = wicker.createServer({ port: 80, validTopics: topics });
 ```
+
+## Commands
+
+Use custom commands to perform actions.
+
+Commands are executing similarly to express routing  
+
+Arguments passed to the route callback are ```message```, ```type``` and ```connection```
+
+Message contains all data recieved from the client.  
+Most data needed will be in ```message.data```
+
+Type is the content type, binary or UTF-8.  
+
+Connection is the sending connection.
+
+```js
+var wicker = require('wicker');
+
+wicker.route('send',(message, type, connection) => {
+  // do stuff
+});
+```
+
+### Sending To All Topics
+
+```js
+wicker.sendToAll('hello',type);
+```
+
+### Sending To a Specfic Topic
+
+```js
+var ids = message.data.id;
+var topic = message.data.topic;
+
+// message to send to subscribers
+var message = 'hello';
+
+wicker.sendToTopic(topic,ids,message,type);
+```
