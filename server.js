@@ -25,6 +25,7 @@ module.exports.route = function(name, func) {
 
 module.exports.createSocketServer = function(options) {
     var port = 80;
+    var protocol = 'echo-protocol';
 
     if(options) {
         if(options.validTopics) {
@@ -41,13 +42,16 @@ module.exports.createSocketServer = function(options) {
             }
         }
 
+        if(options.protocol) {
+            protocol = options.protocol.trim();
+        }
+
         if(options.ssl) { // https
             var sslOptions = options.ssl;
 
             if(sslOptions.key && sslOptions.cert) {
                 var https = require('https');
                 serverObj.server = https.createServer(sslOptions, function(request, response) {
-
                    showStartMessage(request, response);
                 });
             } else {
@@ -80,7 +84,7 @@ module.exports.createSocketServer = function(options) {
           console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
           return;
         }
-        var connection = request.accept('test', request.origin); 
+        var connection = request.accept(protocol, request.origin); 
 
         //store the new connection in your array of connections
         connection.subscriptions = [];
@@ -89,11 +93,12 @@ module.exports.createSocketServer = function(options) {
         console.log((new Date()) + ' Connection accepted.');
 
         connection.on('message', function(message) {
-            if (message.type === 'utf8') {
-                parseBody(message.utf8Data, connections[connections.findIndex(x => x.remoteAddress === connection.remoteAddress)],'utf8');
-            } else if (message.type === 'binary') { // todo
-                console.log('Received Binary Message of ' + message.binaryData.length + ' bytes');
-                parseBody(toUTF8(message.binaryData.toString()), this.connections[this.connections.findIndex(x => x.remoteAddress === connection.remoteAddress)],'binary');
+            if (message.type === 'utf8') { // utf8
+                setConnectionDataType(connection,'utf8'); 
+                parseBody(message.utf8Data, connections[connections.findIndex(x => x.remoteAddress === connection.remoteAddress)]);
+            } else if (message.type === 'binary') { // binary
+                setConnectionDataType(connection,'binary');
+                parseBody(toUTF8(message.binaryData.toString()), this.connections[this.connections.findIndex(x => x.remoteAddress === connection.remoteAddress)]);
             }
         });
 
@@ -107,14 +112,14 @@ module.exports.createSocketServer = function(options) {
 };
 
 // sends to all connected sockets
-module.exports.sendToAll = function(message, type) {
+module.exports.sendToAll = function(message) {
     for(var i=0;i<connections.length;i++) {
-        sendData(message, type, connections[i]);
+        sendData(message, connections[i]);
     }
 };
 
 // sends data to all topics and subscribing ids
-module.exports.sendToTopic = function(topic,ids,message,type) {
+module.exports.sendToTopic = function(topic,ids,message) {
     for(var i=0;i<connections.length;i++) {
         if(connections[i].subscriptions.findIndex(x => x.topic === topic) >= 0) {
             var con = connections[i].subscriptions[connections[i].subscriptions.findIndex(x => x.topic === topic)];
@@ -126,19 +131,35 @@ module.exports.sendToTopic = function(topic,ids,message,type) {
                     for(var c=0;c<ids.length;c++) {
                         for(var tID=0;tID<con.ids.length;tID++) {
                             if(con.ids[tID] === ids[c]) {
-                                sendData(message, type, connections[i]);
+                                sendData(message, connections[i]);
                             }
                         }
                     }
                 }
             } else { // send to topic
-               sendData(message, type, connections[i]);
+               sendData(message, connections[i]);
             }
         }
     } 
 };
 
 // ====== helper functions ======
+
+function setConnectionDataType(connection, type) {
+    if(connections.findIndex(x => x.remoteAddress === connection.remoteAddress) >= 0) {
+        connections[connections.findIndex(x => x.remoteAddress === connection.remoteAddress)].message_type = 'utf8';
+    }
+}
+
+function getConnectionDataType(connection) {
+    if(connections.findIndex(x => x.remoteAddress === connection.remoteAddress) >= 0) {
+        var cConnection = connections.findIndex(x => x.remoteAddress === connection.remoteAddress);
+        if(cConnection.message_type) {
+            return cConnection.message_type;
+        }
+    }
+    return 'utf8';
+}
 
 function showStartMessage(request, response) {
     console.log((new Date()) + ' Received request for ' + request.url);
@@ -152,7 +173,9 @@ function originIsAllowed(origin) {
 }
 
 // sends data to connection as binary or utf8
-function sendData(message, type, connection) {
+function sendData(message, connection) {
+    type = getConnectionDataType(connection);
+
     if(type == 'binary') {
         let buf = new Buffer(message);
         connection.sendBytes(buf);
@@ -180,22 +203,22 @@ function getIDArray(data) {
 }
 
 // manages custom commands 'routes'
-function router(message, connection, type) {
+function router(message, connection) {
     var command = message.command;
 
 	if(command) {
         var i = routes.findIndex(x => x.route === command);
       
 		if(i >= 0) {
-			routes[i].func(message, type, connection);
+			routes[i].func(message, connection);
 		}
 	} else { // no command
-        sendData('No Command',type,connection);
+        sendData('No Command',connection);
 	}
 }
 
 // parses message body
-function parseBody(message, connection, type) {
+function parseBody(message, connection) {
     if(message) {
         if(isJSON(message)) {
             message = JSON.parse(message);
@@ -222,7 +245,7 @@ function parseBody(message, connection, type) {
                                             }
                                         } else {
                                             if(i == validTopics.length - 1) {
-                                                sendData("Invalid Topic",type, connection);
+                                                sendData("Invalid Topic", connection);
                                                 return;
                                             }
                                         }
@@ -264,10 +287,10 @@ function parseBody(message, connection, type) {
                         console.log('Received NO Data: ' + message);  
                     }
                 } else {
-                    router(message, connection, type);
+                    router(message, connection);
                 } 
             } else { // abort
-                sendData("NO Command Recieved",type, connection);
+                sendData("NO Command Recieved", connection);
             }       
         } else { // default
             console.log('Received Message: ' + message);
