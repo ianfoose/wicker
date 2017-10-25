@@ -17,6 +17,16 @@ var wicker = require('wicker');
 var server = wicker.createServer({ port: 80 });
 ```
 
+### Specifying the Protocol
+
+You can specify another protocol other than the default 'echo-protocol'  
+
+Specify it in the 'protocol' option.
+
+```js
+var server = wicker.createServer({ port: 80, protocol: 'test-protocol' });
+```
+
 ## SSL
 
 ```js
@@ -49,19 +59,17 @@ Reserved routes are ```subscribe``` and ```unsubscribe```
 
 Routes are not case sensative  
 
-Arguments passed to the route callback are ```message```, ```type``` and ```connection```
+Arguments passed to the route callback are ```message``` and ```connection```
 
 Message contains all data recieved from the client.  
 Most data needed will be in ```message.data```
-
-Type is the content type, binary or UTF-8.  
 
 Connection is the sending connection.
 
 ```js
 var wicker = require('wicker');
 
-wicker.route('send',(message, type, connection) => {
+wicker.route('send',(message, connection) => {
   // do stuff
 });
 ```
@@ -69,7 +77,7 @@ wicker.route('send',(message, type, connection) => {
 ### Sending To All Topics
 
 ```js
-wicker.sendToAll('hello',type);
+wicker.sendToAll('hello');
 ```
 
 ### Sending To a Specfic Topic
@@ -85,7 +93,7 @@ var topic = message.data.topic;
 // message to send to subscribers
 var message = 'hello';
 
-wicker.sendToTopic(topic,ids,message,type);
+wicker.sendToTopic(topic,ids,message);
 ```
 
 ## Client Commands
