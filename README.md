@@ -84,7 +84,7 @@ wicker.sendToAll('hello');
 
 Topic is the topic name  
 
-ids is the topic ids that will be recieving the data
+ids is the topic ids that will be recieving the data and is optional, only use the parameter when you wish to target only a subsset of the topic.
 
 ```js
 var ids = message.data.id;
@@ -93,7 +93,7 @@ var topic = message.data.topic;
 // message to send to subscribers
 var message = 'hello';
 
-wicker.sendToTopic(topic,ids,message);
+wicker.sendToTopic(topic,message,ids);
 ```
 
 ## Client Commands
