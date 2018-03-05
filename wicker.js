@@ -119,7 +119,7 @@ module.exports.sendToAll = function(message) {
 };
 
 // sends data to all topics and subscribing ids
-module.exports.sendToTopic = function(topic,ids,message) {
+module.exports.sendToTopic = function(topic,message,ids) {
     for(var i=0;i<connections.length;i++) {
         if(connections[i].subscriptions.findIndex(x => x.topic === topic) >= 0) {
             var con = connections[i].subscriptions[connections[i].subscriptions.findIndex(x => x.topic === topic)];
