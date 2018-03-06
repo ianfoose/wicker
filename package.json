@@ -1,11 +1,11 @@
 {
   "name": "wicker",
-  "version": "1.0.2",
+  "version": "1.0.6",
   "dependencies": {
     "websocket": "^1.0.24"
   },
   "description": "A WebSocket server module",
-  "main": "server.js",
+  "main": "wicker.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
