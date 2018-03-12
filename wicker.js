@@ -1,3 +1,11 @@
+/*
+Wicker
+
+A multi-client websocket server with subscription handling.
+
+Copyright 2018 Ian Foose
+*/
+
 // modules
 var WebSocketServer = require('websocket').server;
 
@@ -10,15 +18,15 @@ var validTopics = []; // optional
 var routes = [];
 
 module.exports.route = function(name, func) {
-	if(!func) {
-    	throw new Error('empty route function');
+    if(!func) {
+        throw new Error('empty route function');
     } else {
-    	if(!name) {
-        	throw new Error('empty route name');
+        if(!name) {
+            throw new Error('empty route name');
         } else {
-        	if(routes.findIndex(x => x.name === name) < 0) {
-        		routes.push({route: name, func: func});
-        	}
+            if(routes.findIndex(x => x.name === name) < 0) {
+                routes.push({route: name, func: func});
+            }
         }
     }
 };
@@ -206,15 +214,15 @@ function getIDArray(data) {
 function router(message, connection) {
     var command = message.command;
 
-	if(command) {
+    if(command) {
         var i = routes.findIndex(x => x.route === command);
       
-		if(i >= 0) {
-			routes[i].func(message, connection);
-		}
-	} else { // no command
+        if(i >= 0) {
+            routes[i].func(message, connection);
+        }
+    } else { // no command
         sendData('No Command',connection);
-	}
+    }
 }
 
 // parses message body
@@ -251,7 +259,7 @@ function parseBody(message, connection) {
                                         }
                                     }
                                 } else {
-                                    if(idIndex < 0) {
+                                   if(idIndex < 0) {
                                         var t = {topic:data.topic,ids:[]};
                                         connection.subscriptions.push(t);
                                     }
