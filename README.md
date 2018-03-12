@@ -14,7 +14,7 @@ or by manually including the file ```var wicker = require('./wicker.js');```
 ```js
 var wicker = require('wicker');
 
-var server = wicker.createServer({ port: 80 });
+var server = wicker.createSocketServer({ port: 80 });
 ```
 
 ### Specifying the Protocol
