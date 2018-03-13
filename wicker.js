@@ -95,6 +95,8 @@ module.exports.createSocketServer = function(options) {
         var connection = request.accept(protocol, request.origin); 
 
         //store the new connection in your array of connections
+        let id = guid();
+        connection.id = id;
         connection.subscriptions = [];
         connections.push(connection);
 
@@ -103,15 +105,15 @@ module.exports.createSocketServer = function(options) {
         connection.on('message', function(message) {
             if (message.type === 'utf8') { // utf8
                 setConnectionDataType(connection,'utf8'); 
-                parseBody(message.utf8Data, connections[connections.findIndex(x => x.remoteAddress === connection.remoteAddress)]);
+                parseBody(message.utf8Data, connections[connections.findIndex(x => x.id === id)]);
             } else if (message.type === 'binary') { // binary
                 setConnectionDataType(connection,'binary');
-                parseBody(toUTF8(message.binaryData.toString()), this.connections[this.connections.findIndex(x => x.remoteAddress === connection.remoteAddress)]);
+                parseBody(toUTF8(message.binaryData.toString()), this.connections[this.connections.findIndex(x => x.id === connection.id)]);
             }
         });
 
         connection.on('close', function(reasonCode, description) {
-            connections.splice(connections[connections.findIndex(x => x.remoteAddress === connection.remoteAddress)], 1);
+            connections.splice(connections[connections.findIndex(x => x.id === connection.id)], 1);
             console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
         });
     });
@@ -154,14 +156,14 @@ module.exports.sendToTopic = function(topic,message,ids) {
 // ====== helper functions ======
 
 function setConnectionDataType(connection, type) {
-    if(connections.findIndex(x => x.remoteAddress === connection.remoteAddress) >= 0) {
-        connections[connections.findIndex(x => x.remoteAddress === connection.remoteAddress)].message_type = 'utf8';
+    if(connections.findIndex(x => x.id === connection.id) >= 0) {
+        connections[connections.findIndex(x => x.id === connection.id)].message_type = 'utf8';
     }
 }
 
 function getConnectionDataType(connection) {
-    if(connections.findIndex(x => x.remoteAddress === connection.remoteAddress) >= 0) {
-        var cConnection = connections.findIndex(x => x.remoteAddress === connection.remoteAddress);
+    if(connections.findIndex(x => x.id === connection.id) >= 0) {
+        var cConnection = connections.findIndex(x => x.id === connection.id);
         if(cConnection.message_type) {
             return cConnection.message_type;
         }
@@ -290,7 +292,7 @@ function parseBody(message, connection) {
                             }
                         }
 
-                        connections[connections.findIndex(x => x.remoteAddress === connection.remoteAddress)] = connection;
+                        connections[connections.findIndex(x => x.id === connection.id)] = connection;
                     } else {
                         console.log('Received NO Data: ' + message);  
                     }
@@ -304,4 +306,13 @@ function parseBody(message, connection) {
             console.log('Received Message: ' + message);
         }
     } 
+}
+
+function guid() {
+    function s4() {
+        return Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
+    }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' + s4() + '-' + s4() + s4() + s4();
 }
