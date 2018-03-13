@@ -1,6 +1,6 @@
 {
   "name": "wicker",
-  "version": "1.0.7",
+  "version": "1.0.9",
   "dependencies": {
     "websocket": "^1.0.24"
   },
