@@ -57,7 +57,7 @@ module.exports.createSocketServer = function(options) {
         if(options.ssl) { // https
             var sslOptions = options.ssl;
 
-            if(sslOptions.key && sslOptions.cert) {
+            if(sslOptions.key && sslOptions.crt) {
                 var https = require('https');
                 serverObj.server = https.createServer(sslOptions, function(request, response) {
                    showStartMessage(request, response);
