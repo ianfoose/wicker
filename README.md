@@ -24,7 +24,7 @@ You can specify another protocol other than the default 'echo-protocol'
 Specify it in the 'protocol' option.
 
 ```js
-var server = wicker.createServer({ port: 80, protocol: 'test-protocol' });
+var server = wicker.createSocketServer({ port: 80, protocol: 'test-protocol' });
 ```
 
 ## SSL
@@ -34,7 +34,7 @@ var wicker = require('wicker');
 
 var sslOptions = { key: keyFile, cert: certFile };
 
-var server = wicker.createServer({ port: 80, ssl: sslOptions });
+var server = wicker.createSocketServer({ port: 80, ssl: sslOptions });
 ```
 
 ## Valid Topics
@@ -46,7 +46,7 @@ var wicker = require('wicker');
 
 var topics = ['posts','comments'];
 
-var server = wicker.createServer({ port: 80, validTopics: topics });
+var server = wicker.createSocketServer({ port: 80, validTopics: topics });
 ```
 
 ## Commands
@@ -134,7 +134,7 @@ Any other data you wish to send can be placed in the payload however you like.
 
 ### Subscrbing To Topics By ID
 
-You can pass an array of item IDs that belong to a topic to a topic.
+You can pass an array of item IDs that belong to a topic.
 
 IDs can be used for subscribing, unsubscribing,or for routes.
 
