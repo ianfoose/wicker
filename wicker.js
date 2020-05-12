@@ -7,7 +7,8 @@ Copyright 2018 Ian Foose
 */
 
 // modules
-var WebSocketServer = require('websocket').server;
+const WebSocketServer = require('websocket').server;
+const fs = require('fs');
 
 // server object
 var serverObj = {};
@@ -19,10 +20,10 @@ var routes = [];
 
 module.exports.route = function(name, func) {
     if(!func) {
-        throw new Error('empty route function');
+        throw new Error('Empty route function is not allowed!!');
     } else {
         if(!name) {
-            throw new Error('empty route name');
+            throw new Error('Empty route names are not allowed!!');
         } else {
             if(routes.findIndex(x => x.name === name) < 0) {
                 routes.push({route: name, func: func});
@@ -40,12 +41,14 @@ module.exports.createSocketServer = function(options) {
             if(options.validTopics instanceof Array) {
                 validTopics = options.validTopics;
             } else {
-                throw new Error('Invalid Format, invalid topics must be array');
+                throw new Error('Invalid Format, invalid topics must be array!!');
             }
         }
 
         if(options.port) {
-            if(!isNaN(port)) {
+            if(isNaN(port)) {
+                throw new Error('Websocket Server port must be a number!!');
+            } else {
                 port = options.port;
             }
         }
@@ -58,12 +61,15 @@ module.exports.createSocketServer = function(options) {
             var sslOptions = options.ssl;
 
             if(sslOptions.key && sslOptions.crt) {
+                sslOptions = readConfigFile('crt', sslOptions);
+                sslOptions = readConfigFile('key', sslOptions);
+
                 var https = require('https');
                 serverObj.server = https.createServer(sslOptions, function(request, response) {
                    showStartMessage(request, response);
                 });
             } else {
-                throw new Error('No SSL Credentials Provided');
+                throw new Error('An SSL certifcate and private key is requried for secure Websockets!!');
             }
         } else { // http
             var http = require('http');
@@ -74,7 +80,7 @@ module.exports.createSocketServer = function(options) {
     }
 
     serverObj.server.listen(port, function() {
-        console.log((new Date()) + ' Server is listening on port '+port);
+        console.log(`${new Date()} Server is listening on port ${port}`);
     });
 
     serverObj.wsServer = new WebSocketServer({
@@ -89,7 +95,7 @@ module.exports.createSocketServer = function(options) {
           // Make sure we only accept requests from an allowed origin 
           
           request.reject();
-          console.log((new Date()) + ' Connection from origin ' + request.origin + ' rejected.');
+          console.log(`${new Date()} Connection from origin ${request.origin} rejected.`);
           return;
         }
         var connection = request.accept(protocol, request.origin); 
@@ -100,7 +106,7 @@ module.exports.createSocketServer = function(options) {
         connection.subscriptions = [];
         connections.push(connection);
 
-        console.log((new Date()) + ' Connection accepted.');
+        console.log(`${new Date()} Connection accepted.`);
 
         connection.on('message', function(message) {
             if (message.type === 'utf8') { // utf8
@@ -114,7 +120,7 @@ module.exports.createSocketServer = function(options) {
 
         connection.on('close', function(reasonCode, description) {
             connections.splice(connections[connections.findIndex(x => x.id === connection.id)], 1);
-            console.log((new Date()) + ' Peer ' + connection.remoteAddress + ' disconnected.');
+            console.log(`${new Date()} Peer ${connection.remoteAddress} disconnected.`);
         });
     });
 
@@ -172,7 +178,7 @@ function getConnectionDataType(connection) {
 }
 
 function showStartMessage(request, response) {
-    console.log((new Date()) + ' Received request for ' + request.url);
+    console.log(`${new Date()} Received request for ${request.url}`);
     response.writeHead(404);
     response.end();
 }
@@ -294,20 +300,36 @@ function parseBody(message, connection) {
 
                         connections[connections.findIndex(x => x.id === connection.id)] = connection;
                     } else {
-                        console.log('Received NO Data: ' + message);  
+                        console.log(`Received NO Data: ${message}`);  
                     }
                 } else {
                     router(message, connection);
                 } 
             } else { // abort
-                sendData("NO Command Recieved", connection);
+                sendData('NO Command Recieved', connection);
             }       
         } else { // default
-            console.log('Received Message: ' + message);
+            console.log(`Received Message: ${message}`);
         }
     } 
 }
 
+// reads a files contents for a config value file path
+function readConfigFile(key, config) {
+    if(config[key]) {
+        let filePath = config[key];
+
+        // check if config file exists
+        if(fs.existsSync(filePath)) {
+            config[key] = fs.readFileSync(filePath);
+        } else {
+            throw new Error(`File, ${filePath}, not found!!`);
+        }
+    }
+    return config;
+}
+
+// generate a UUID
 function guid() {
     function s4() {
         return Math.floor((1 + Math.random()) * 0x10000)
