@@ -21,7 +21,7 @@ var server = wicker.createSocketServer({ port: 80 });
 
 You can specify another protocol other than the default 'echo-protocol'  
 
-Specify it in the 'protocol' option.
+Specify it in the "protocol" option.
 
 ```js
 var server = wicker.createSocketServer({ port: 80, protocol: 'test-protocol' });
@@ -44,7 +44,7 @@ Valid topics must be an array.
 ```js
 var wicker = require('wicker');
 
-var topics = ['posts','comments'];
+var topics = ['posts', 'comments'];
 
 var server = wicker.createSocketServer({ port: 80, validTopics: topics });
 ```
@@ -69,7 +69,7 @@ Connection is the sending connection.
 ```js
 var wicker = require('wicker');
 
-wicker.route('send',(message, connection) => {
+wicker.route('send', (message, connection) => {
   // do stuff
 });
 ```
@@ -93,7 +93,7 @@ var topic = message.data.topic;
 // message to send to subscribers
 var message = 'hello';
 
-wicker.sendToTopic(topic,message,ids);
+wicker.sendToTopic(topic, message, ids);
 ```
 
 ## Client Commands
@@ -102,9 +102,9 @@ All data needs to be sent as json or else it will not be parsed by the server.
 
 ### Data Payload
 
-All payloads must contain a 'command' key to be executed.
+All payloads must contain a "command" key to be executed.
 
-All topic data such as topic name and associated IDs must be in the 'data' key of the payload.  
+All topic data such as topic name and associated IDs must be in the "data" key of the payload.  
 
 Any other data you wish to send can be placed in the payload however you like.  
 
@@ -112,10 +112,10 @@ Any other data you wish to send can be placed in the payload however you like.
 
 ```json
 {
-     "command":"subscribe",
+     "command": "subscribe",
      "data":
          {
-             "topic":"topicname"
+             "topic": "topicname"
          }
 }
 ```
@@ -124,10 +124,10 @@ Any other data you wish to send can be placed in the payload however you like.
 
 ```json
 {
-     "command":"unsubscribe",
+     "command": "unsubscribe",
      "data":
          {
-             "topic":"topicname"
+             "topic": "topicname"
          }
 }
 ```
@@ -140,28 +140,28 @@ IDs can be used for subscribing, unsubscribing,or for routes.
 
 ```json
 {
-     "command":"route",
+     "command": "route",
      "data":
          {
-             "topic":"topicname",
-             "id":[12,789]
+             "topic": "topicname",
+             "id": [12, 789]
          }
 }
 ```
 
 ### Routes
 
-Replace "any-data-key" with the key for your data.  
+Replace "key" with the preferred key for your data.  
 
 Customize data payload as you like.
 
 ```json
 {
-     "command":"route",
+     "command": "route",
      "data":
          {
-             "topic":"topicname",
-             "any-data-key":"data"
+             "topic": "topicname",
+             "<key>": "<data>"
          }
 }
 ```
