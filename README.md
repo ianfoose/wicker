@@ -29,11 +29,11 @@ var server = wicker.createSocketServer({ port: 80, protocol: 'test-protocol' });
 
 ## SSL
 
+**NOTE:** You may pass in a file path to the certs or the 'utf-8' contents of the cert/key files. 
+
 ```js
 var wicker = require('wicker');
-
 var sslOptions = { key: keyFile, cert: certFile };
-
 var server = wicker.createSocketServer({ port: 80, ssl: sslOptions });
 ```
 
