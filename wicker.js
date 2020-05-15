@@ -61,8 +61,17 @@ module.exports.createSocketServer = function(options) {
             var sslOptions = options.ssl;
 
             if(sslOptions.key && sslOptions.crt) {
-                sslOptions = readConfigFile('crt', sslOptions);
-                sslOptions = readConfigFile('key', sslOptions);
+                if(sslOptions['cert'].includes('.crt') || sslOptions['cert'].includes('.pem')) {
+                    sslOptions = readConfigFile('cert', sslOptions);
+                }
+
+                if(sslOptions['key'].includes('.key')) {
+                    sslOptions = readConfigFile('key', sslOptions);
+                }
+
+                if(sslOptions['ca'].includes('.crt') || sslOptions['ca'].includes('.pem')) {
+                    sslOptions = readConfigFile('ca', sslOptions);
+                }
 
                 var https = require('https');
                 serverObj.server = https.createServer(sslOptions, function(request, response) {
