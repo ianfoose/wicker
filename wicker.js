@@ -60,7 +60,7 @@ module.exports.createSocketServer = function(options) {
         if(options.ssl) { // https
             var sslOptions = options.ssl;
 
-            if(sslOptions.key && sslOptions.crt) {
+            if(sslOptions.key && sslOptions.cert) {
                 if(sslOptions['cert'].includes('.crt') || sslOptions['cert'].includes('.pem')) {
                     sslOptions = readConfigFile('cert', sslOptions);
                 }
